@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Screener - StockVision</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%);
+        }
+        .btn-primary {
+            background-color: #4F46E5;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #3B82F6;
+        }
+        .filter-card {
+            transition: all 0.3s ease;
+        }
+        .filter-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md py-4 px-6 flex justify-between items-center">
+        <div class="flex items-center">
+            <span class="text-2xl font-bold text-indigo-600">StockVision</span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <a href="dashboard.html" class="text-gray-600 hover:text-indigo-600">Dashboard</a>
+            <a href="watchlist.html" class="text-gray-600 hover:text-indigo-600">Watchlist</a>
+            <a href="screener.html" class="text-indigo-600 font-bold">Stock Screener</a>
+            <button id="logoutBtn" class="btn-primary px-4 py-2 rounded-lg">Log Out</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Screener Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Stock Screener</h1>
+            <p class="text-gray-600">Filter and analyze stocks based on multiple criteria</p>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Price Range -->
+                <div class="filter-card p-4 border rounded-lg">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Price Range (₹)</label>
+                    <div class="flex space-x-2">
+                        <input type="number" id="minPrice" placeholder="Min" class="w-1/2 p-2 border rounded-lg">
+                        <input type="number" id="maxPrice" placeholder="Max" class="w-1/2 p-2 border rounded-lg">
+                    </div>
+                </div>
+
+                <!-- Volume -->
+                <div class="filter-card p-4 border rounded-lg">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Min Volume</label>
+                    <input type="number" id="minVolume" placeholder="Minimum volume" class="w-full p-2 border rounded-lg">
+                </div>
+
+                <!-- Industry -->
+                <div class="filter-card p-4 border rounded-lg">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Industry</label>
+                    <select id="industry" class="w-full p-2 border rounded-lg">
+                        <option value="">All Industries</option>
+                        <!-- Will be populated dynamically -->
+                    </select>
+                </div>
+
+                <!-- Price Change % -->
+                <div class="filter-card p-4 border rounded-lg">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Price Change %</label>
+                    <select id="priceChange" class="w-full p-2 border rounded-lg">
+                        <option value="any">Any</option>
+                        <option value="up">Up Only</option>
+                        <option value="down">Down Only</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Additional Filters -->
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Market Cap -->
+                <div class="filter-card p-4 border rounded-lg">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Market Cap</label>
+                    <select id="marketCap" class="w-full p-2 border rounded-lg">
+                        <option value="">All</option>
+                        <option value="large">Large Cap</option>
+                        <option value="mid">Mid Cap</option>
+                        <option value="small">Small Cap</option>
+                    </select>
+                </div>
+
+                <!-- 52 Week High/Low -->
+                <div class="filter-card p-4 border rounded-lg">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">52 Week Range</label>
+                    <select id="52WeekRange" class="w-full p-2 border rounded-lg">
+                        <option value="">All</option>
+                        <option value="near_high">Near 52W High</option>
+                        <option value="near_low">Near 52W Low</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Apply Filters Button -->
+            <div class="mt-6 flex justify-end">
+                <button id="resetFilters" class="px-4 py-2 text-gray-600 hover:text-gray-800 mr-4">
+                    Reset Filters
+                </button>
+                <button id="applyFilters" class="btn-primary px-6 py-2 rounded-lg">
+                    Apply Filters
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Results</h2>
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-600" id="resultCount">0 stocks found</span>
+                    <button id="exportCSV" class="flex items-center text-indigo-600 hover:text-indigo-800">
+                        <i class="fas fa-download mr-2"></i>
+                        Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Table -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Change %</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Volume</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">52W High</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">52W Low</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Results will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let allStocks = [];
+        let filteredStocks = [];
+        let isLoading = false;
+
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            fetchStocks();
+        });
+
+        // Fetch all stocks
+        async function fetchStocks() {
+            try {
+                showLoading();
+                const response = await fetch('http://localhost:5000/api/stocks');
+                allStocks = await response.json();
+                hideLoading();
+                populateIndustries();
+                applyFilters();
+            } catch (error) {
+                console.error('Error fetching stocks:', error);
+                alert('Failed to fetch stocks data');
+                hideLoading();
+            }
+        }
+
+        // Show loading state
+        function showLoading() {
+            isLoading = true;
+            document.getElementById('resultsBody').innerHTML = `
+                <tr>
+                    <td colspan="8" class="px-6 py-4 text-center">
+                        <div class="flex justify-center items-center">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                            <span class="ml-2">Loading stocks...</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            document.getElementById('resultCount').textContent = 'Loading...';
+            
+            // Disable buttons while loading
+            document.getElementById('applyFilters').disabled = true;
+            document.getElementById('resetFilters').disabled = true;
+            document.getElementById('exportCSV').disabled = true;
+            
+            // Add loading appearance
+            document.getElementById('applyFilters').classList.add('opacity-50');
+            document.getElementById('resetFilters').classList.add('opacity-50');
+            document.getElementById('exportCSV').classList.add('opacity-50');
+        }
+
+        // Hide loading state
+        function hideLoading() {
+            isLoading = false;
+            
+            // Enable buttons
+            document.getElementById('applyFilters').disabled = false;
+            document.getElementById('resetFilters').disabled = false;
+            document.getElementById('exportCSV').disabled = false;
+            
+            // Remove loading appearance
+            document.getElementById('applyFilters').classList.remove('opacity-50');
+            document.getElementById('resetFilters').classList.remove('opacity-50');
+            document.getElementById('exportCSV').classList.remove('opacity-50');
+        }
+
+        // Populate industry dropdown
+        function populateIndustries() {
+            const industries = [...new Set(allStocks.map(stock => stock.industry).filter(Boolean))];
+            const industrySelect = document.getElementById('industry');
+            
+            // Clear existing options except the first one
+            while (industrySelect.options.length > 1) {
+                industrySelect.remove(1);
+            }
+            
+            // Add new options
+            industries.sort().forEach(industry => {
+                const option = document.createElement('option');
+                option.value = industry;
+                option.textContent = industry;
+                industrySelect.appendChild(option);
+            });
+        }
+
+        // Format number with commas
+        function formatNumber(num) {
+            if (typeof num === 'string') {
+                num = parseFloat(num.replace(/,/g, ''));
+            }
+            return num.toLocaleString('en-IN');
+        }
+
+        // Apply filters to stocks
+        async function applyFilters() {
+            if (isLoading) return;
+            
+            showLoading();
+            
+            try {
+                // Get filter values
+                const minPrice = parseFloat(document.getElementById('minPrice').value) || 0;
+                const maxPrice = parseFloat(document.getElementById('maxPrice').value) || 9999999;
+                const minVolume = parseFloat(document.getElementById('minVolume').value) || 0;
+                const industry = document.getElementById('industry').value;
+                const priceChange = document.getElementById('priceChange').value;
+                const marketCap = document.getElementById('marketCap').value;
+                const weekRange = document.getElementById('52WeekRange').value;
+                
+                // Prepare filter criteria object
+                const filterCriteria = {
+                    minPrice,
+                    maxPrice,
+                    minVolume,
+                    industry,
+                    priceChange,
+                    marketCap,
+                    weekRange
+                };
+                
+                // Send filter criteria to API
+                const response = await fetch('http://localhost:5000/api/stocks/screen', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(filterCriteria)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API responded with status: ${response.status}`);
+                }
+                
+                // Get filtered results
+                filteredStocks = await response.json();
+                
+                // Update the UI
+                updateResults();
+            } catch (error) {
+                console.error('Error applying filters:', error);
+                document.getElementById('resultsBody').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-6 py-4 text-center text-red-500">
+                            Error filtering stocks: ${error.message}
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('resultCount').textContent = '0 stocks found';
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Update results table
+        function updateResults() {
+            const tbody = document.getElementById('resultsBody');
+            document.getElementById('resultCount').textContent = `${filteredStocks.length} stocks found`;
+
+            if (filteredStocks.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                            No stocks match your filter criteria. Try adjusting your filters.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filteredStocks.map(stock => {
+                const changeClass = stock.percentChange >= 0 ? 'text-green-600' : 'text-red-600';
+
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${stock.symbol}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${stock.industry || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹${formatNumber(stock.close)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${changeClass}">${stock.percentChange >= 0 ? '+' : ''}${stock.percentChange.toFixed(2)}%</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatNumber(stock.volume)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹${formatNumber(stock.high52W)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹${formatNumber(stock.low52W)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="addToWatchlist('${stock.symbol}')" class="text-indigo-600 hover:text-indigo-900">
+                                <i class="fas fa-plus mr-1"></i> Add to Watchlist
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Add stock to watchlist
+        async function addToWatchlist(symbol) {
+            try {
+                const stock = filteredStocks.find(s => s.symbol === symbol);
+                if (!stock) {
+                    throw new Error(`Stock ${symbol} not found in results`);
+                }
+                
+                const userId = localStorage.getItem('userId') || 'user123'; // Fallback ID if not set
+                
+                const response = await fetch('http://localhost:5000/api/watchlist/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        userId,
+                        symbol: stock.symbol
+                    })
+                });
+
+                if (response.ok) {
+                    // Show success message
+                    const addButton = event.target.closest('button');
+                    if (addButton) {
+                        const originalText = addButton.innerHTML;
+                        addButton.innerHTML = '<i class="fas fa-check mr-1"></i> Added';
+                        addButton.classList.add('text-green-600');
+                        setTimeout(() => {
+                            addButton.innerHTML = originalText;
+                            addButton.classList.remove('text-green-600');
+                        }, 2000);
+                    } else {
+                        alert('Stock added to watchlist successfully!');
+                    }
+                } else {
+                    throw new Error('Failed to add stock to watchlist');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to add stock to watchlist: ' + error.message);
+            }
+        }
+
+        // Export results to CSV
+        async function exportToCSV() {
+            if (isLoading || filteredStocks.length === 0) {
+                alert('No data to export. Please apply filters first to see results.');
+                return;
+            }
+            
+            try {
+                showLoading();
+                document.getElementById('exportCSV').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Exporting...';
+                
+                // Get current filter values
+                const minPrice = parseFloat(document.getElementById('minPrice').value) || 0;
+                const maxPrice = parseFloat(document.getElementById('maxPrice').value) || 9999999;
+                const minVolume = parseFloat(document.getElementById('minVolume').value) || 0;
+                const industry = document.getElementById('industry').value;
+                const priceChange = document.getElementById('priceChange').value;
+                const marketCap = document.getElementById('marketCap').value;
+                const weekRange = document.getElementById('52WeekRange').value;
+                
+                // Create filter criteria with CSV format
+                const filterCriteria = {
+                    minPrice,
+                    maxPrice,
+                    minVolume,
+                    industry,
+                    priceChange,
+                    marketCap,
+                    weekRange,
+                    format: 'csv'
+                };
+                
+                // Direct fetch as blob
+                const response = await fetch('http://localhost:5000/api/stocks/screen', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(filterCriteria)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API responded with status: ${response.status}`);
+                }
+                
+                // Get blob data from response
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'stock_screener_results.csv';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+                // Reset button
+                document.getElementById('exportCSV').innerHTML = '<i class="fas fa-download mr-2"></i>Export CSV';
+            } catch (error) {
+                console.error('Error exporting to CSV:', error);
+                alert('Failed to export data: ' + error.message);
+                document.getElementById('exportCSV').innerHTML = '<i class="fas fa-download mr-2"></i>Export CSV';
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('applyFilters').addEventListener('click', applyFilters);
+        document.getElementById('resetFilters').addEventListener('click', () => {
+            document.querySelectorAll('input').forEach(input => input.value = '');
+            document.querySelectorAll('select').forEach(select => select.value = '');
+            applyFilters();
+        });
+        document.getElementById('exportCSV').addEventListener('click', exportToCSV);
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        });
+
+        // Add keypress event listeners for inputs
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('keypress', event => {
+                if (event.key === 'Enter') {
+                    applyFilters();
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

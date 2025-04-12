@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockVision Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial"></script>
+    <style>
+        .sidebar {
+            height: calc(100vh - 64px);
+        }
+        .main-content {
+            height: calc(100vh - 64px);
+            overflow-y: auto;
+        }
+        .stock-card {
+            transition: all 0.3s ease;
+        }
+        .stock-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .chart-container {
+            width: 100%;
+            height: 400px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md px-6 py-4">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center">
+                <span class="text-2xl font-bold text-indigo-600">StockVision</span>
+                <span class="ml-2 px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-md">Dashboard</span>
+            </div>
+            <div class="flex items-center">
+                <div class="relative mr-4">
+                    <input type="text" id="stock-search" placeholder="Search stocks..." class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bell text-lg"></i>
+                    </button>
+                    <button class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-sync-alt text-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 bg-white shadow-md p-4">
+            <div class="mb-6">
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Main Menu</h3>
+                <ul class="mt-4 space-y-2">
+                    <li>
+                        <a href="#" class="flex items-center px-4 py-2 text-indigo-600 bg-indigo-50 rounded-lg">
+                            <i class="fas fa-chart-line mr-3"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="watchlist.html" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                            <i class="fas fa-star mr-3"></i>
+                            <span>Watchlist</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="screener.html" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                            <i class="fas fa-search mr-3"></i>
+                            <span>Stock Screener</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="insights.html" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                            <i class="fas fa-lightbulb mr-3"></i>
+                            <span>Insights</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="news.html" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                            <i class="fas fa-newspaper mr-3"></i>
+                            <span>Market News</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="mb-6">
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Filters</h3>
+                
+                <!-- Industry Filter -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Industry</label>
+                    <select id="industryFilter" class="w-full p-2 border rounded-lg text-sm">
+                        <option value="">All Industries</option>
+                        <option value="Automobile">Automobile</option>
+                        <option value="Banking">Banking</option>
+                        <option value="Cement">Cement</option>
+                        <option value="Chemicals">Chemicals</option>
+                        <option value="Construction">Construction</option>
+                        <option value="Consumer Durables">Consumer Durables</option>
+                        <option value="Energy">Energy</option>
+                        <option value="FMCG">FMCG</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="IT">Information Technology</option>
+                        <option value="Insurance">Insurance</option>
+                        <option value="Manufacturing">Manufacturing</option>
+                        <option value="Media">Media & Entertainment</option>
+                        <option value="Metal">Metal & Mining</option>
+                        <option value="Oil & Gas">Oil & Gas</option>
+                        <option value="Pharmaceuticals">Pharmaceuticals</option>
+                        <option value="Real Estate">Real Estate</option>
+                        <option value="Retail">Retail</option>
+                        <option value="Telecom">Telecommunications</option>
+                        <option value="Textile">Textile</option>
+                        <option value="Transportation">Transportation & Logistics</option>
+                    </select>
+                </div>
+
+                <!-- Price Range Filter -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
+                    <div class="flex space-x-2">
+                        <input type="number" id="minPrice" placeholder="Min" class="w-1/2 p-2 border rounded-lg text-sm">
+                        <input type="number" id="maxPrice" placeholder="Max" class="w-1/2 p-2 border rounded-lg text-sm">
+                    </div>
+                </div>
+
+                <!-- Volume Filter -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Min Volume</label>
+                    <input type="number" id="minVolume" placeholder="Minimum Volume" class="w-full p-2 border rounded-lg text-sm">
+                </div>
+
+                <!-- Apply Filters Button -->
+                <button id="applyFilters" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg text-sm hover:bg-indigo-700 mb-3">
+                    Apply Filters
+                </button>
+                
+                <!-- Screener Link -->
+                <a href="screener.html" class="w-full bg-white border border-indigo-600 text-indigo-600 py-2 px-4 rounded-lg text-sm hover:bg-indigo-50 flex items-center justify-center">
+                    <i class="fas fa-search mr-2"></i>
+                    Discover More Stocks
+                </a>
+            </div>
+
+            <div id="watchlist-container" class="mb-6">
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Your Watchlist</h3>
+                <div id="watchlist-stocks" class="mt-4 space-y-2">
+                    <!-- Watchlist stocks will be dynamically populated here -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content flex-1 p-6">
+            <!-- Market Overview -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center">
+                        <h2 class="text-2xl font-bold">Market Overview</h2>
+                        <a href="insights.html" class="ml-3 px-3 py-1 text-sm bg-indigo-100 text-indigo-600 rounded-md hover:bg-indigo-200 flex items-center">
+                            <i class="fas fa-lightbulb mr-1"></i>View Insights
+                        </a>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-sm text-gray-500 mr-2">Last updated: <span id="last-updated">Loading...</span></span>
+                        <button class="p-2 rounded-full hover:bg-gray-200">
+                            <i class="fas fa-sync-alt text-gray-500"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="market-overview" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Market overview cards will be dynamically populated here -->
+                </div>
+            </div>
+
+            <!-- Stock Chart -->
+            <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 id="stock-title" class="text-xl font-bold">Loading...</h3>
+                        <div class="flex items-center mt-1">
+                            <span id="stock-price" class="text-2xl font-bold mr-2">-</span>
+                            <span id="stock-change" class="text-gray-600">-</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button id="add-to-watchlist" onclick="toggleWatchlist()" class="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Add to Watchlist</button>
+                        <div class="flex items-center space-x-2">
+                            <div class="bg-gray-100 rounded-md p-1">
+                                <button id="chartTypeToggle" onclick="toggleChartType()" class="px-3 py-1 text-sm bg-white text-indigo-600 shadow-sm rounded-md">
+                                    <i class="fas fa-chart-line mr-1"></i>Line
+                                </button>
+                            </div>
+                        <div class="bg-gray-100 rounded-md p-1">
+                            <button class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">1D</button>
+                            <button class="px-3 py-1 text-sm bg-white text-indigo-600 shadow-sm rounded-md">1W</button>
+                            <button class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">1M</button>
+                            <button class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">3M</button>
+                            <button class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">1Y</button>
+                            <button class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">All</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="stockChart"></canvas>
+                </div>
+                <div id="stock-stats" class="grid grid-cols-3 gap-4 mt-6">
+                    <!-- Stock statistics will be dynamically populated here -->
+                </div>
+            </div>
+
+            <!-- Screener Promotion Banner -->
+            <div class="bg-gradient-to-r from-indigo-600 to-blue-500 text-white p-5 rounded-lg shadow-sm mb-6 flex justify-between items-center">
+                <div>
+                    <h3 class="text-xl font-bold mb-1">Find Your Perfect Stocks</h3>
+                    <p class="text-indigo-100">Use our advanced screener to filter and discover stocks based on your criteria</p>
+                </div>
+                <a href="screener.html" class="bg-white text-indigo-600 px-4 py-2 rounded-lg font-medium hover:bg-indigo-50 transition-colors">
+                    Open Screener
+                </a>
+            </div>
+
+            <!-- Trending Stocks & Watchlist -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Trending Stocks -->
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">Trending Stocks</h3>
+                        <a href="screener.html" class="text-sm text-indigo-600 hover:text-indigo-800">Find New Stocks</a>
+                    </div>
+                    <div id="trending-stocks" class="space-y-4">
+                        <!-- Trending stocks will be dynamically populated here -->
+                    </div>
+                </div>
+
+                <!-- Your Watchlist -->
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">Your Watchlist</h3>
+                        <button class="text-sm text-indigo-600 hover:text-indigo-800">Manage</button>
+                    </div>
+                    <div id="watchlist-details" class="space-y-4">
+                        <!-- Watchlist details will be dynamically populated here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let globalStocks = [];
+        let currentStockIndex = 0;
+        let stockChart = null;
+        let currentChartType = 'line'; // Add this variable to track chart type
+        const userId = 'user123'; // For now, we'll use a simple userId
+
+        // Add this function to show loading state
+        function showLoading() {
+            document.getElementById('market-overview').innerHTML = `
+                <div class="col-span-4 flex justify-center items-center p-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+            `;
+            
+            document.getElementById('stock-title').textContent = 'Loading...';
+            document.getElementById('stock-price').textContent = '-';
+            document.getElementById('stock-change').textContent = '-';
+            document.getElementById('stock-stats').innerHTML = '';
+            document.getElementById('trending-stocks').innerHTML = `
+                <div class="flex justify-center items-center p-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+            `;
+            document.getElementById('watchlist-details').innerHTML = `
+                <div class="flex justify-center items-center p-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+            `;
+        }
+
+        // Update the fetchStocks function to show loading state
+        async function fetchStocks() {
+            showLoading();
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/stocks?limit=100');
+                const stocks = await response.json();
+                if (stocks && stocks.length > 0) {
+                    globalStocks = stocks;
+                    updateDashboard(stocks);
+                    setupStockNavigation();
+                    updateLastUpdated();
+                    
+                    // Dispatch stocksLoaded event
+                    const event = new CustomEvent('stocksLoaded', { detail: stocks });
+                    document.dispatchEvent(event);
+                } else {
+                    showError('No stock data available');
+                }
+            } catch (error) {
+                console.error('Error fetching stocks:', error);
+                showError('Failed to fetch stock data');
+            }
+        }
+
+        // Show error message with visual feedback
+        function showError(message) {
+            console.error(message);
+            
+            // Create and show error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded';
+            errorDiv.innerHTML = `
+                <strong class="font-bold">Error!</strong>
+                <span class="block sm:inline"> ${message}</span>
+            `;
+            document.body.appendChild(errorDiv);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+
+        // Update last updated timestamp
+        function updateLastUpdated() {
+            const now = new Date();
+            const options = { 
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            };
+            document.getElementById('last-updated').textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        // Format number with commas
+        function formatNumber(num) {
+            if (!num) return '0';
+            if (typeof num === 'string') {
+                num = num.replace(/,/g, '');
+            }
+            return parseFloat(num).toLocaleString('en-IN');
+        }
+
+        // Convert string number with commas to float
+        function parseStringNumber(str) {
+            if (!str) return 0;
+            if (typeof str === 'string') {
+                return parseFloat(str.replace(/,/g, ''));
+            }
+            return str;
+        }
+
+        // Improve percentage change calculation with better precision
+        function calculatePercentageChange(current, previous) {
+            const currentValue = parseStringNumber(current);
+            const previousValue = parseStringNumber(previous);
+            if (!previousValue) return 0;
+            
+            // Calculate with more precision
+            const change = ((currentValue - previousValue) / previousValue) * 100;
+            
+            // Return 0 if the change is extremely small (avoids -0.00%)
+            if (Math.abs(change) < 0.01) return 0;
+            
+            return change;
+        }
+
+        // Update formatPercentage function to handle small percentages better
+        function formatPercentage(value) {
+            // If very close to zero, just show 0.00%
+            if (Math.abs(value) < 0.01) {
+                return '0.00%';
+            }
+            
+            // Otherwise format normally, ensuring 2 decimal places
+            return (value >= 0 ? '+' : '') + value.toFixed(2) + '%';
+        }
+
+        // Update market overview section
+        function updateMarketOverview(stocks) {
+            const container = document.getElementById('market-overview');
+            
+            // Get diverse stocks by selecting from different industries if possible
+            const industries = {};
+            const diverseStocks = [];
+            
+            // First, try to get stocks from different industries
+            for (const stock of stocks) {
+                const industry = stock.industry || 'Unknown';
+                if (!industries[industry]) {
+                    industries[industry] = true;
+                    diverseStocks.push(stock);
+                    if (diverseStocks.length >= 4) break;
+                }
+            }
+            
+            // If we don't have enough, fill with any stocks
+            while (diverseStocks.length < 4 && diverseStocks.length < stocks.length) {
+                diverseStocks.push(stocks[diverseStocks.length]);
+            }
+            
+            const overviewData = diverseStocks.map(stock => ({
+                label: stock.symbol || stock.series,
+                price: stock.close,
+                change: calculatePercentageChange(stock.close, stock.prevClose),
+                volume: stock.volume,
+                industry: stock.industry || 'Stock'
+            }));
+
+            container.innerHTML = overviewData.map(item => `
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">${item.label}</span>
+                        <span class="text-xs px-2 py-1 rounded-full ${item.change >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${formatPercentage(item.change)}
+                        </span>
+                    </div>
+                    <div class="mt-2">
+                        <span class="text-2xl font-bold">₹${formatNumber(item.price)}</span>
+                        <div class="text-sm text-gray-500 mt-1">Vol: ${formatNumber(item.volume)}</div>
+                        <div class="text-xs text-indigo-600 mt-1">${item.industry}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update stock details
+        async function updateStockDetails(stock) {
+            const stockName = stock.symbol || stock.series;
+            document.getElementById('stock-title').textContent = `${stockName} - ${stock.industry || 'Stock'} Details`;
+            document.getElementById('stock-price').textContent = `₹${formatNumber(stock.close)}`;
+            
+            const priceChange = stock.close - stock.prevClose;
+            const percentageChange = calculatePercentageChange(stock.close, stock.prevClose);
+            const changeElement = document.getElementById('stock-change');
+            
+            changeElement.textContent = `${priceChange >= 0 ? '+' : ''}${formatNumber(priceChange.toFixed(2))} (${formatPercentage(percentageChange)})`;
+            changeElement.className = priceChange >= 0 ? 'text-green-600' : 'text-red-600';
+
+            // Update watchlist button
+            const button = document.getElementById('add-to-watchlist');
+            const inWatchlist = await isInWatchlist(stockName);
+            button.textContent = inWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist';
+            button.classList.toggle('bg-red-600', inWatchlist);
+            button.classList.toggle('hover:bg-red-700', inWatchlist);
+
+            // Update stock statistics
+            const statsContainer = document.getElementById('stock-stats');
+            const stats = [
+                { label: 'Open', value: stock.open },
+                { label: 'High', value: stock.high },
+                { label: 'Low', value: stock.low },
+                { label: 'Volume', value: stock.volume },
+                { label: 'VWAP', value: stock.vwap || 0 },
+                { label: '52W High', value: stock.high52W }
+            ];
+
+            statsContainer.innerHTML = stats.map(stat => `
+                <div>
+                    <h4 class="text-sm text-gray-500">${stat.label}</h4>
+                    <p class="font-medium">₹${formatNumber(stat.value)}</p>
+                </div>
+            `).join('');
+        }
+
+        // Update trending stocks
+        function updateTrendingStocks(stocks) {
+            const container = document.getElementById('trending-stocks');
+            
+            // Sort stocks by absolute percentage change to get "trending" ones
+            const sortedStocks = [...stocks].sort((a, b) => {
+                const changeA = Math.abs(calculatePercentageChange(a.close, a.prevClose));
+                const changeB = Math.abs(calculatePercentageChange(b.close, b.prevClose));
+                return changeB - changeA;
+            });
+            
+            const trendingStocks = sortedStocks.slice(0, 4);
+
+            container.innerHTML = trendingStocks.map(stock => {
+                const priceChange = calculatePercentageChange(stock.close, stock.prevClose);
+                const isPositive = priceChange >= 0;
+                const stockName = stock.symbol || stock.series;
+
+                return `
+                    <div class="stock-card flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:cursor-pointer hover:bg-gray-50 trending-stock-card"
+                         data-symbol="${stockName}">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-bold">
+                                ${stockName.slice(0, 3)}
+                            </div>
+                            <div class="ml-3">
+                                <h4 class="font-medium">${stockName}</h4>
+                                <p class="text-sm text-gray-500">${stock.industry || 'Stock'}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium">₹${formatNumber(stock.close)}</p>
+                            <p class="text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}">
+                                ${formatPercentage(priceChange)}
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Add click event listeners
+            const stockCards = container.querySelectorAll('.trending-stock-card');
+            stockCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const symbol = this.getAttribute('data-symbol');
+                    selectStock(symbol);
+                });
+            });
+        }
+
+        // Update watchlist
+        async function updateWatchlist() {
+            try {
+                const response = await fetch(`http://localhost:5000/api/watchlist/${userId}`);
+                const data = await response.json();
+                
+            const container = document.getElementById('watchlist-details');
+                
+                if (!data.stocks || data.stocks.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-star text-gray-300 text-4xl mb-4"></i>
+                            <p class="text-gray-500">Your watchlist is empty</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = data.stocks.map(stock => {
+                    const percentChange = calculatePercentageChange(stock.close, stock.prevClose);
+                    const changeClass = percentChange >= 0 ? 'text-green-600' : 'text-red-600';
+
+                return `
+                        <div class="stock-card flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:cursor-pointer hover:bg-gray-50 watchlist-stock-card"
+                             data-symbol="${stock.symbol}">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center font-bold">
+                                    ${stock.symbol.slice(0, 3)}
+                            </div>
+                            <div class="ml-3">
+                                    <h4 class="font-medium">${stock.symbol}</h4>
+                                <p class="text-sm text-gray-500">${stock.industry || 'Stock'}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium">₹${formatNumber(stock.close)}</p>
+                                <p class="text-sm ${changeClass}">
+                                    ${formatPercentage(percentChange)}
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+                // Add click event listeners
+                const watchlistCards = container.querySelectorAll('.watchlist-stock-card');
+                watchlistCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        const symbol = this.getAttribute('data-symbol');
+                        selectStock(symbol);
+                    });
+                });
+            } catch (error) {
+                console.error('Error updating watchlist:', error);
+                document.getElementById('watchlist-details').innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-red-500">Failed to load watchlist</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Fetch historical data for a stock
+        async function fetchHistoricalData(symbol) {
+            try {
+                const response = await fetch(`http://localhost:5000/api/stocks/${symbol}/history`);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error fetching historical data:', error);
+                return [];
+            }
+        }
+
+        // Update the updateStockChart function to handle both chart types
+        async function updateStockChart(stock) {
+            try {
+                // Always destroy existing chart before proceeding
+                if (stockChart) {
+                    stockChart.destroy();
+                    stockChart = null; // Set to null to ensure complete destruction
+                }
+
+                // Show loading state
+                document.querySelector('.chart-container').innerHTML = `
+                    <div class="flex justify-center items-center h-full">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                        <span class="ml-2">Loading chart data...</span>
+                    </div>
+                `;
+
+                // Fetch historical data
+                const historicalData = await fetchHistoricalData(stock.symbol);
+                
+                // Restore canvas with a fresh element
+                document.querySelector('.chart-container').innerHTML = `<canvas id="stockChart"></canvas>`;
+                const ctx = document.getElementById('stockChart').getContext('2d');
+
+                if (!historicalData || historicalData.length === 0) {
+                    document.querySelector('.chart-container').innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full">
+                            <p class="text-gray-500">No historical data available for ${stock.symbol}</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Process the data
+                const timestamps = historicalData.map(item => new Date(item.date).getTime());
+                
+                // Data for line chart
+                const prices = historicalData.map(item => ({
+                    x: new Date(item.date).getTime(),
+                    y: parseFloat(item.close)
+                })).sort((a, b) => a.x - b.x);
+
+                // Data for candlestick chart
+                const candlestickData = historicalData.map(item => ({
+                    x: new Date(item.date),
+                    o: parseFloat(item.open),
+                    h: parseFloat(item.high),
+                    l: parseFloat(item.low),
+                    c: parseFloat(item.close)
+                })).sort((a, b) => a.x - b.x);
+
+                const volumes = historicalData.map(item => ({
+                    x: new Date(item.date).getTime(),
+                    y: parseFloat(item.volume || 0)
+                })).sort((a, b) => a.x - b.x);
+
+                // Calculate price change
+                const firstPrice = prices[0]?.y || 0;
+                const lastPrice = prices[prices.length - 1]?.y || 0;
+                const priceChange = lastPrice - firstPrice;
+                const isPositive = priceChange >= 0;
+
+                // Calculate moving averages
+                const ma20 = calculateMovingAverage(prices, 20);
+                const ma50 = calculateMovingAverage(prices, 50);
+
+                // Create datasets based on chart type
+                const datasets = [];
+                
+                if (currentChartType === 'line') {
+                    datasets.push({
+                        label: `${stock.symbol} Price`,
+                        data: prices,
+                        borderColor: isPositive ? '#22c55e' : '#ef4444',
+                        backgroundColor: isPositive ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                        fill: true,
+                        yAxisID: 'price',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        tension: 0.1
+                    });
+                } else {
+                    datasets.push({
+                        label: `${stock.symbol} OHLC`,
+                        data: candlestickData,
+                        type: 'candlestick',
+                        yAxisID: 'price',
+                        candlestick: {
+                            color: {
+                                up: '#22c55e',
+                                down: '#ef4444',
+                            }
+                        }
+                    });
+                }
+
+                // Add moving averages and volume for both chart types
+                datasets.push(
+                    {
+                        label: '20 MA',
+                        data: ma20,
+                        type: 'line',
+                        borderColor: '#6366f1',
+                        borderWidth: 1.5,
+                        pointRadius: 0,
+                        yAxisID: 'price',
+                        borderDash: [2, 2]
+                    },
+                    {
+                        label: '50 MA',
+                        data: ma50,
+                        type: 'line',
+                        borderColor: '#f59e0b',
+                        borderWidth: 1.5,
+                        pointRadius: 0,
+                        yAxisID: 'price',
+                        borderDash: [4, 4]
+                    },
+                    {
+                        label: 'Volume',
+                        data: volumes,
+                        type: 'bar',
+                        yAxisID: 'volume',
+                        backgroundColor: isPositive ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)',
+                        borderColor: 'transparent',
+                        barThickness: 'flex',
+                        barPercentage: 1.0,
+                        categoryPercentage: 1.0
+                    }
+                );
+
+                // Create the chart
+                stockChart = new Chart(ctx, {
+                    type: currentChartType === 'line' ? 'line' : 'candlestick',
+                    data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                    plugins: {
+                        legend: {
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.dataset.type === 'candlestick') {
+                                            const point = context.raw;
+                                            return [
+                                                `Open: ₹${formatNumber(point.o.toFixed(2))}`,
+                                                `High: ₹${formatNumber(point.h.toFixed(2))}`,
+                                                `Low: ₹${formatNumber(point.l.toFixed(2))}`,
+                                                `Close: ₹${formatNumber(point.c.toFixed(2))}`
+                                            ];
+                                        } else if (context.dataset.yAxisID === 'volume') {
+                                            label += formatNumber(context.parsed.y);
+                                        } else {
+                                            label += '₹' + formatNumber(context.parsed.y.toFixed(2));
+                                        }
+                                        return label;
+                                    }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                    unit: 'day',
+                                    displayFormats: {
+                                        day: 'MMM d'
+                                    }
+                            },
+                            grid: {
+                                display: false
+                                },
+                                ticks: {
+                                    maxTicksLimit: 8,
+                                    font: {
+                                        size: 10
+                                    }
+                                }
+                            },
+                            price: {
+                                position: 'right',
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + formatNumber(value.toFixed(2));
+                                    },
+                                    font: {
+                                        size: 10
+                                    }
+                                }
+                            },
+                            volume: {
+                                position: 'left',
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        if (value >= 1000000) {
+                                            return (value / 1000000).toFixed(1) + 'M';
+                                        }
+                                        if (value >= 1000) {
+                                            return (value / 1000).toFixed(1) + 'K';
+                                        }
+                                        return value;
+                                    },
+                                    font: {
+                                        size: 10
+                                    }
+                                }
+                            }
+                    }
+                }
+            });
+            } catch (error) {
+                console.error('Error creating chart:', error);
+                document.querySelector('.chart-container').innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full">
+                        <p class="text-red-500">Error loading chart</p>
+                        <p class="text-sm text-gray-500">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Add this function to calculate moving averages
+        function calculateMovingAverage(data, period) {
+            const result = [];
+            if (data.length < period) return result;
+
+            for (let i = period - 1; i < data.length; i++) {
+                const sum = data.slice(i - period + 1, i + 1).reduce((acc, val) => acc + val.y, 0);
+                result.push({
+                    x: data[i].x,
+                    y: sum / period
+                });
+            }
+            return result;
+        }
+
+        // Update dashboard
+        function updateDashboard(stocks) {
+            if (!stocks || stocks.length === 0) {
+                showError('No stock data available');
+                return;
+            }
+
+            const currentStock = stocks[currentStockIndex];
+            
+            updateMarketOverview(stocks);
+            updateStockDetails(currentStock);
+            updateTrendingStocks(stocks);
+            updateWatchlist();
+            updateStockChart(currentStock);
+        }
+
+        // Fix the setupStockNavigation function to use backend search
+        function setupStockNavigation() {
+            const refreshButton = document.querySelector('.fa-sync-alt').parentElement;
+            refreshButton.addEventListener('click', fetchStocks);
+
+            const searchInput = document.getElementById('stock-search');
+            const searchContainer = searchInput.parentElement;
+            
+            // Create dropdown element if it doesn't exist
+            let dropdown = document.getElementById('search-dropdown');
+            if (!dropdown) {
+                dropdown = document.createElement('div');
+                dropdown.className = 'absolute z-50 w-full bg-white mt-1 rounded-lg shadow-lg hidden max-h-96 overflow-y-auto';
+                dropdown.id = 'search-dropdown';
+                searchContainer.appendChild(dropdown);
+            }
+            
+            // Search function that uses the backend API
+            async function searchStocks(query) {
+                if (!query || query.length < 1) {
+                    dropdown.innerHTML = '';
+                    dropdown.classList.add('hidden');
+                    return;
+                }
+                
+                try {
+                    // Show loading state in dropdown
+                    dropdown.innerHTML = `
+                        <div class="p-4 text-center">
+                            <div class="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div>
+                            <span class="ml-2">Searching...</span>
+                        </div>
+                    `;
+                    dropdown.classList.remove('hidden');
+                    
+                    // Fetch from backend API with the search query
+                    const response = await fetch(`http://localhost:5000/api/stocks/search?q=${encodeURIComponent(query)}`);
+                    if (!response.ok) {
+                        throw new Error(`Search failed with status: ${response.status}`);
+                    }
+                    
+                    const results = await response.json();
+                    
+                    // If no results from backend API, try searching in locally cached stocks
+                    if (results.length === 0 && globalStocks.length > 0) {
+                        console.log('No results from backend, searching locally');
+                const filteredStocks = globalStocks.filter(stock => 
+                            (stock.symbol || '').toLowerCase().includes(query.toLowerCase()) ||
+                            (stock.industry || '').toLowerCase().includes(query.toLowerCase())
+                        );
+                        
+                        renderSearchResults(filteredStocks);
+                    } else {
+                        renderSearchResults(results);
+                    }
+                } catch (error) {
+                    console.error('Search error:', error);
+                    
+                    // Fallback to local search if API fails
+                    if (globalStocks.length > 0) {
+                        console.log('Falling back to local search due to API error');
+                        const filteredStocks = globalStocks.filter(stock => 
+                            (stock.symbol || '').toLowerCase().includes(query.toLowerCase()) ||
+                            (stock.industry || '').toLowerCase().includes(query.toLowerCase())
+                        );
+                        
+                        renderSearchResults(filteredStocks);
+                    } else {
+                        dropdown.innerHTML = `
+                            <div class="p-3 text-red-500 text-center">
+                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                Error searching stocks
+                            </div>
+                        `;
+                    }
+                }
+            }
+            
+            // Render search results in the dropdown
+            function renderSearchResults(stocks) {
+                if (stocks.length === 0) {
+                    dropdown.innerHTML = `
+                        <div class="p-3 text-gray-500 text-center">
+                            No matching stocks found
+                        </div>
+                    `;
+                    return;
+                }
+                
+                dropdown.innerHTML = stocks.slice(0, 10).map(stock => {
+                    const symbol = stock.symbol || stock.series || '';
+                    const industry = stock.industry || 'Stock';
+                    const close = stock.close || 0;
+                    const prevClose = stock.prevClose || close;
+                    const percentChange = calculatePercentageChange(close, prevClose);
+                    
+                    return `
+                        <div class="p-3 hover:bg-gray-100 cursor-pointer flex items-center justify-between border-b border-gray-100 stock-search-item"
+                             data-symbol="${symbol}">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center font-bold text-xs">
+                                    ${symbol.slice(0, 3)}
+                                </div>
+                                <div class="ml-3">
+                                    <p class="font-medium">${symbol}</p>
+                                    <p class="text-xs text-gray-500">${industry}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium">₹${formatNumber(close)}</p>
+                                <p class="text-xs ${percentChange >= 0 ? 'text-green-600' : 'text-red-600'}">
+                                    ${formatPercentage(percentChange)}
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                // Add click events to dropdown items
+                const searchItems = dropdown.querySelectorAll('.stock-search-item');
+                searchItems.forEach(item => {
+                    item.addEventListener('click', function() {
+                        const symbol = this.getAttribute('data-symbol');
+                        searchInput.value = symbol;
+                        dropdown.classList.add('hidden');
+                        selectStock(symbol);
+                    });
+                });
+            }
+            
+            // Debounce function for search
+            let searchTimeout;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    const searchTerm = e.target.value.toLowerCase().trim();
+                    searchStocks(searchTerm);
+                }, 300); // 300ms debounce
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!searchContainer.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+            
+            // Handle keyboard navigation
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    dropdown.classList.add('hidden');
+                } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const items = dropdown.querySelectorAll('.stock-search-item');
+                    if (items.length === 0) return;
+                    
+                    const currentIndex = Array.from(items).findIndex(item => item.classList.contains('bg-gray-100'));
+                    
+                    if (e.key === 'ArrowDown') {
+                        const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+                        items.forEach((item, i) => item.classList.toggle('bg-gray-100', i === nextIndex));
+                    } else {
+                        const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+                        items.forEach((item, i) => item.classList.toggle('bg-gray-100', i === prevIndex));
+                    }
+                } else if (e.key === 'Enter') {
+                    const selectedItem = dropdown.querySelector('.bg-gray-100');
+                    if (selectedItem) {
+                        const symbol = selectedItem.getAttribute('data-symbol');
+                        searchInput.value = symbol;
+                        dropdown.classList.add('hidden');
+                        selectStock(symbol);
+                    } else if (searchInput.value.trim().length > 0) {
+                        // If no item is selected but search has text, search for it
+                        searchStocks(searchInput.value.trim());
+                    }
+                }
+            });
+        }
+
+        // Auto-refresh data every 5 minutes
+        setInterval(fetchStocks, 300000);
+
+        // Initial data fetch
+        document.addEventListener('DOMContentLoaded', fetchStocks);
+
+        // Add this function to fetch a specific stock by symbol
+        async function fetchStockBySymbol(symbol) {
+            try {
+                // First try to find it in our globally loaded stocks
+                const stockIndex = globalStocks.findIndex(stock => 
+                    (stock.symbol || stock.series) === symbol
+                );
+                
+                if (stockIndex !== -1) {
+                    currentStockIndex = stockIndex;
+                    updateDashboard(globalStocks);
+                    return true;
+                }
+                
+                // If not found, fetch it directly from the API
+                // Note: You may need to add this endpoint to your backend
+                const response = await fetch(`http://localhost:5000/api/stocks/symbol/${symbol}`);
+                if (!response.ok) {
+                    throw new Error('Stock not found');
+                }
+                
+                const stock = await response.json();
+                // Add to global stocks and show it
+                globalStocks.push(stock);
+                currentStockIndex = globalStocks.length - 1;
+                updateDashboard(globalStocks);
+                return true;
+            } catch (error) {
+                console.error(`Error fetching stock ${symbol}:`, error);
+                showError(`Could not find stock: ${symbol}`);
+                return false;
+            }
+        }
+
+        // Update the selectStock function to properly handle clicking on stocks
+        async function selectStock(symbol) {
+            try {
+                console.log(`Selecting stock: ${symbol}`);
+                if (!symbol) {
+                    console.error('No symbol provided to selectStock');
+                    return;
+                }
+
+                // Find the stock in globalStocks
+                const stockIndex = globalStocks.findIndex(stock => 
+                    (stock.symbol || stock.series) === symbol
+                );
+                
+                console.log(`Found stock at index: ${stockIndex}`);
+                
+                if (stockIndex !== -1) {
+                    currentStockIndex = stockIndex;
+                    const selectedStock = globalStocks[stockIndex];
+                    
+                    // Update UI to show loading state
+                    document.getElementById('stock-title').textContent = `Loading ${symbol}...`;
+                    document.getElementById('stock-price').textContent = '-';
+                    document.getElementById('stock-change').textContent = '-';
+                    
+                    // Update all sections with the selected stock
+                    try {
+                        await updateStockDetails(selectedStock);
+                        await updateStockChart(selectedStock);
+                    } catch (error) {
+                        console.error('Error updating stock details/chart:', error);
+                    }
+                    
+                    // Scroll to stock chart section
+                    document.querySelector('.chart-container').scrollIntoView({ 
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    
+                    // Update search input if selection was not from search
+                    const searchInput = document.getElementById('stock-search');
+                    if (searchInput.value !== symbol) {
+                        searchInput.value = symbol;
+                    }
+                    
+                    // Hide search dropdown if open
+                    const dropdown = document.getElementById('search-dropdown');
+                    if (dropdown) {
+                        dropdown.classList.add('hidden');
+                    }
+
+                    console.log(`Successfully selected stock: ${symbol}`);
+                } else {
+                    // If stock not found in globalStocks, try fetching it
+                    console.log(`Stock ${symbol} not found in globalStocks, trying to fetch...`);
+                    const success = await fetchStockBySymbol(symbol);
+                    if (!success) {
+                        showError(`Could not find stock: ${symbol}`);
+                    }
+                }
+            } catch (error) {
+                console.error('Error selecting stock:', error);
+                showError(`Error loading stock details for ${symbol}`);
+            }
+        }
+
+        // Add this after fetchStocks function
+        async function debugStockData() {
+            try {
+                const response = await fetch('http://localhost:5000/api/stocks');
+                const stocks = await response.json();
+                
+                // Count stocks by industry
+                const industries = {};
+                stocks.forEach(stock => {
+                    const industry = stock.industry || 'Unknown';
+                    industries[industry] = (industries[industry] || 0) + 1;
+                });
+                
+                console.log(`Total stocks fetched: ${stocks.length}`);
+                console.log('Industries breakdown:', industries);
+                
+                // Check for stock properties
+                if(stocks.length > 0) {
+                    console.log('Sample stock data:', stocks[0]);
+                }
+                
+                return stocks;
+            } catch (error) {
+                console.error('Error debugging stocks:', error);
+                return null;
+            }
+        }
+
+        // Call this function when the page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            await debugStockData();
+            fetchStocks();
+        });
+
+        // Add this function to create industry filters
+        function updateIndustryFilters(stocks) {
+            // Get unique industries
+            const industries = {};
+            stocks.forEach(stock => {
+                const industry = stock.industry || 'Unknown';
+                industries[industry] = (industries[industry] || 0) + 1;
+            });
+            
+            const container = document.getElementById('watchlist-stocks');
+            container.innerHTML = '<p class="text-xs text-gray-500 mb-2">Filter by industry:</p>';
+            
+            // Add 'All' option
+            const allOption = document.createElement('div');
+            allOption.className = 'px-3 py-2 text-sm hover:bg-indigo-50 rounded cursor-pointer';
+            allOption.innerHTML = `<span class="font-medium">All Industries</span> <span class="text-gray-500 text-xs">(${stocks.length})</span>`;
+            allOption.addEventListener('click', () => {
+                updateDashboard(globalStocks);
+            });
+            container.appendChild(allOption);
+            
+            // Add industry filters
+            Object.keys(industries).sort().forEach(industry => {
+                if (industry === 'Unknown') return; // Skip unknown
+                
+                const div = document.createElement('div');
+                div.className = 'px-3 py-2 text-sm hover:bg-indigo-50 rounded cursor-pointer';
+                div.innerHTML = `<span class="font-medium">${industry}</span> <span class="text-gray-500 text-xs">(${industries[industry]})</span>`;
+                
+                div.addEventListener('click', () => {
+                    const filteredStocks = globalStocks.filter(stock => stock.industry === industry);
+                    if (filteredStocks.length > 0) {
+                        currentStockIndex = 0;
+                        updateDashboard(filteredStocks);
+                    }
+                });
+                
+                container.appendChild(div);
+            });
+        }
+
+        // Add this function to handle time period changes
+        function setupTimeButtons() {
+            const buttons = document.querySelectorAll('.bg-gray-100 button');
+            buttons.forEach(button => {
+                button.addEventListener('click', async () => {
+                    // Remove active class from all buttons
+                    buttons.forEach(btn => {
+                        btn.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
+                        btn.classList.add('bg-gray-100', 'text-gray-700');
+                    });
+
+                    // Add active class to clicked button
+                    button.classList.remove('bg-gray-100', 'text-gray-700');
+                    button.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+
+                    // Get current stock
+                    const currentStock = globalStocks[currentStockIndex];
+                    if (!currentStock) return;
+
+                    // Update chart based on selected period
+                    const period = button.textContent.trim();
+                    let days = 30; // default to 30 days
+
+                    switch (period) {
+                        case '1D': days = 1; break;
+                        case '1W': days = 7; break;
+                        case '1M': days = 30; break;
+                        case '3M': days = 90; break;
+                        case '1Y': days = 365; break;
+                        case 'All': days = 1825; break; // 5 years
+                    }
+
+                    // Update chart with new period
+                    await updateStockChart(currentStock, days);
+                });
+            });
+        }
+
+        // Call this when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setupTimeButtons();
+            fetchStocks();
+        });
+
+        // Add watchlist functions
+        async function isInWatchlist(symbol) {
+            try {
+                const response = await fetch(`http://localhost:5000/api/watchlist/${userId}`);
+                const data = await response.json();
+                return data.stocks.some(stock => stock.symbol === symbol);
+            } catch (error) {
+                console.error('Error checking watchlist:', error);
+                return false;
+            }
+        }
+
+        async function toggleWatchlist() {
+            const currentStock = globalStocks[currentStockIndex];
+            if (!currentStock) return;
+
+            const symbol = currentStock.symbol;
+            const button = document.getElementById('add-to-watchlist');
+            
+            try {
+                const inWatchlist = await isInWatchlist(symbol);
+                const endpoint = inWatchlist ? 'remove' : 'add';
+                
+                const response = await fetch(`http://localhost:5000/api/watchlist/${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userId, symbol })
+                });
+
+                if (!response.ok) throw new Error(`Failed to ${endpoint} stock`);
+                
+                // Update button text
+                button.textContent = inWatchlist ? 'Add to Watchlist' : 'Remove from Watchlist';
+                button.classList.toggle('bg-red-600');
+                button.classList.toggle('hover:bg-red-700');
+                
+                // Refresh watchlist section
+                fetchWatchlistDetails();
+            } catch (error) {
+                console.error('Error updating watchlist:', error);
+                alert('Failed to update watchlist');
+            }
+        }
+
+        // Add this function to handle filters
+        function setupFilters() {
+            const industryFilter = document.getElementById('industryFilter');
+            const minPrice = document.getElementById('minPrice');
+            const maxPrice = document.getElementById('maxPrice');
+            const minVolume = document.getElementById('minVolume');
+            const applyFilters = document.getElementById('applyFilters');
+
+            // Apply filters function
+            function applyFiltersCriteria() {
+                const selectedIndustry = industryFilter.value;
+                const minPriceValue = parseFloat(minPrice.value) || 0;
+                const maxPriceValue = parseFloat(maxPrice.value) || Infinity;
+                const minVolumeValue = parseFloat(minVolume.value) || 0;
+
+                const filteredStocks = globalStocks.filter(stock => {
+                    const price = parseStringNumber(stock.close);
+                    const volume = parseStringNumber(stock.volume);
+                    const stockIndustry = stock.industry || 'Unknown';
+                    
+                    const industryMatch = !selectedIndustry || 
+                        stockIndustry.toLowerCase().includes(selectedIndustry.toLowerCase()) ||
+                        selectedIndustry.toLowerCase().includes(stockIndustry.toLowerCase());
+                    
+                    return industryMatch &&
+                           price >= minPriceValue &&
+                           (maxPriceValue === Infinity || price <= maxPriceValue) &&
+                           volume >= minVolumeValue;
+                });
+
+                if (filteredStocks.length > 0) {
+                    currentStockIndex = 0;
+                    updateDashboard(filteredStocks);
+                    
+                    // Show success message with count
+                    const message = document.createElement('div');
+                    message.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded';
+                    message.innerHTML = `
+                        <strong class="font-bold">Found ${filteredStocks.length} stocks</strong>
+                        <span class="block sm:inline"> matching your filters</span>
+                    `;
+                    document.body.appendChild(message);
+                    setTimeout(() => message.remove(), 3000);
+                } else {
+                    showError('No stocks match the selected filters');
+                }
+            }
+
+            // Reset filters function
+            function resetFilters() {
+                industryFilter.value = '';
+                minPrice.value = '';
+                maxPrice.value = '';
+                minVolume.value = '';
+                updateDashboard(globalStocks);
+            }
+
+            // Add reset button
+            const resetButton = document.createElement('button');
+            resetButton.className = 'w-full bg-gray-200 text-gray-700 py-2 px-4 rounded-lg text-sm hover:bg-gray-300 mt-2';
+            resetButton.textContent = 'Reset Filters';
+            resetButton.onclick = resetFilters;
+            applyFilters.parentNode.insertBefore(resetButton, applyFilters.nextSibling);
+
+            // Event listeners
+            applyFilters.addEventListener('click', applyFiltersCriteria);
+
+            // Add input event listeners for real-time validation
+            minPrice.addEventListener('input', validatePriceInput);
+            maxPrice.addEventListener('input', validatePriceInput);
+            minVolume.addEventListener('input', validateVolumeInput);
+
+            // Input validation functions
+            function validatePriceInput(e) {
+                const value = parseFloat(e.target.value);
+                if (value < 0) e.target.value = 0;
+                if (e.target.id === 'maxPrice' && value < parseFloat(minPrice.value)) {
+                    e.target.value = minPrice.value;
+                }
+            }
+
+            function validateVolumeInput(e) {
+                const value = parseFloat(e.target.value);
+                if (value < 0) e.target.value = 0;
+            }
+
+            // Add keyboard shortcut for applying filters (Enter key)
+            [minPrice, maxPrice, minVolume].forEach(input => {
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        applyFiltersCriteria();
+                    }
+                });
+            });
+        }
+
+        // Initialize filters when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setupFilters();
+            setupTimeButtons();
+            fetchStocks();
+        });
+
+        // Add toggle chart type function
+        function toggleChartType() {
+            const button = document.getElementById('chartTypeToggle');
+            
+            // First destroy the existing chart if it exists
+            if (stockChart) {
+                stockChart.destroy();
+                stockChart = null;
+            }
+            
+            if (currentChartType === 'line') {
+                currentChartType = 'candlestick';
+                button.innerHTML = '<i class="fas fa-chart-bar mr-1"></i>Candle';
+            } else {
+                currentChartType = 'line';
+                button.innerHTML = '<i class="fas fa-chart-line mr-1"></i>Line';
+            }
+            
+            // Clear the chart container to prevent any visual artifacts
+            document.querySelector('.chart-container').innerHTML = '<canvas id="stockChart"></canvas>';
+            
+            // Update the chart with current stock
+            if (globalStocks && globalStocks[currentStockIndex]) {
+                updateStockChart(globalStocks[currentStockIndex]);
+            }
+        }
+    </script>
+</body>
+</html>

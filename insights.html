@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Insights - StockVision</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%);
+        }
+        .btn-primary {
+            background-color: #4F46E5;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #3B82F6;
+        }
+        .insight-card {
+            transition: all 0.3s ease;
+        }
+        .insight-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .chart-container {
+            width: 100%;
+            height: 300px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md py-4 px-6 flex justify-between items-center">
+        <div class="flex items-center">
+            <span class="text-2xl font-bold text-indigo-600">StockVision</span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <a href="dashboard.html" class="text-gray-600 hover:text-indigo-600">Dashboard</a>
+            <a href="watchlist.html" class="text-gray-600 hover:text-indigo-600">Watchlist</a>
+            <a href="screener.html" class="text-gray-600 hover:text-indigo-600">Stock Screener</a>
+            <a href="insights.html" class="text-indigo-600 font-bold">Insights</a>
+            <button id="logoutBtn" class="btn-primary px-4 py-2 rounded-lg">Log Out</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Market Insights</h1>
+            <p class="text-gray-600">Advanced analytics and insights based on market data</p>
+        </div>
+
+        <!-- Market Trends Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Market Trends</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Market Overview Card -->
+                <div class="bg-white rounded-lg shadow-sm p-6 insight-card">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Market Overview</h3>
+                    <div id="market-summary" class="space-y-4">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Stocks:</span>
+                            <span class="font-semibold" id="total-stocks">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Gainers:</span>
+                            <span class="font-semibold text-green-600" id="gainers-count">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Losers:</span>
+                            <span class="font-semibold text-red-600" id="losers-count">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Unchanged:</span>
+                            <span class="font-semibold text-gray-600" id="unchanged-count">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Volume:</span>
+                            <span class="font-semibold" id="total-volume">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Market Sentiment Card -->
+                <div class="bg-white rounded-lg shadow-sm p-6 insight-card">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Market Sentiment</h3>
+                    <div class="chart-container">
+                        <canvas id="sentiment-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Sector Performance Card -->
+                <div class="bg-white rounded-lg shadow-sm p-6 insight-card col-span-2">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Sector Performance</h3>
+                    <div class="chart-container">
+                        <canvas id="sector-performance-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Movers Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Top Movers</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Top Gainers -->
+                <div class="bg-white rounded-lg shadow-sm p-6 insight-card">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Top Gainers</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Change %</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Volume</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-gainers-body" class="divide-y divide-gray-200">
+                                <!-- Will be populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Top Losers -->
+                <div class="bg-white rounded-lg shadow-sm p-6 insight-card">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Top Losers</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Change %</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Volume</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-losers-body" class="divide-y divide-gray-200">
+                                <!-- Will be populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Industry Analysis Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Industry Analysis</h2>
+            <div class="grid grid-cols-1 gap-6">
+                <!-- Industry Comparison Card -->
+                <div class="bg-white rounded-lg shadow-sm p-6 insight-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">Industry Comparison</h3>
+                        <select id="industry-selector" class="p-2 border rounded-lg">
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Industry</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg. Price</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg. Change %</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Volume</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gainers/Losers Ratio</th>
+                                </tr>
+                            </thead>
+                            <tbody id="industry-analysis-body" class="divide-y divide-gray-200">
+                                <!-- Will be populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historical Analysis Section -->
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Historical Analysis</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Volume Trends Card -->
+                <div class="bg-white rounded-lg shadow-sm p-6 insight-card">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Volume Trends</h3>
+                    <div class="chart-container">
+                        <canvas id="volume-trend-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Price Volatility Card -->
+                <div class="bg-white rounded-lg shadow-sm p-6 insight-card">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Price Volatility</h3>
+                    <div class="chart-container">
+                        <canvas id="volatility-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Check if user is logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+            }
+            
+            // Set up logout button
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                localStorage.removeItem('token');
+                localStorage.removeItem('userId');
+                window.location.href = 'login.html';
+            });
+
+            // Show loading indicators
+            showLoadingState();
+            
+            // Load all data
+            loadMarketOverview();
+            loadTopMovers();
+            loadIndustryAnalysis();
+            loadHistoricalData();
+        });
+
+        // Show loading state on all components
+        function showLoadingState() {
+            const loadingHtml = `
+                <div class="flex justify-center items-center p-4">
+                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+                    <span class="ml-2 text-gray-600">Loading data...</span>
+                </div>
+            `;
+            
+            // Add loading indicators to all dynamic content containers
+            document.getElementById('market-summary').innerHTML = loadingHtml;
+            document.getElementById('sentiment-chart').parentNode.innerHTML = loadingHtml;
+            document.getElementById('sector-performance-chart').parentNode.innerHTML = loadingHtml;
+            document.getElementById('top-gainers-body').innerHTML = `<tr><td colspan="4">${loadingHtml}</td></tr>`;
+            document.getElementById('top-losers-body').innerHTML = `<tr><td colspan="4">${loadingHtml}</td></tr>`;
+            document.getElementById('industry-analysis-body').innerHTML = `<tr><td colspan="5">${loadingHtml}</td></tr>`;
+            document.getElementById('volume-trend-chart').parentNode.innerHTML = loadingHtml;
+            document.getElementById('volatility-chart').parentNode.innerHTML = loadingHtml;
+        }
+
+        // Format numbers for better readability
+        function formatNumber(num) {
+            if (num >= 10000000) {
+                return (num / 10000000).toFixed(2) + ' Cr';
+            } else if (num >= 100000) {
+                return (num / 100000).toFixed(2) + ' L';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+
+        // Load Market Overview Data
+        async function loadMarketOverview() {
+            try {
+                // Add timeout to prevent eternal loading
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                const response = await fetch('http://localhost:5000/api/market/overview', {
+                    signal: controller.signal
+                }).catch(error => {
+                    console.error('Fetch error:', error);
+                    return null;
+                });
+                
+                clearTimeout(timeoutId);
+                
+                // If response is null or not ok, use fallback data
+                let data;
+                if (!response || !response.ok) {
+                    console.warn('Using fallback data for market overview');
+                    data = {
+                        totalStocks: 500,
+                        gainers: 200,
+                        losers: 250,
+                        unchanged: 50,
+                        totalVolume: 15000000
+                    };
+                } else {
+                    data = await response.json();
+                }
+                
+                // Update market summary
+                document.getElementById('total-stocks').textContent = data.totalStocks;
+                document.getElementById('gainers-count').textContent = data.gainers;
+                document.getElementById('losers-count').textContent = data.losers;
+                document.getElementById('unchanged-count').textContent = data.unchanged;
+                document.getElementById('total-volume').textContent = formatNumber(data.totalVolume);
+
+                // Restore the canvas before creating chart
+                restoreCanvas('sentiment-chart');
+                
+                // Create Sentiment Chart
+                const sentimentCtx = document.getElementById('sentiment-chart').getContext('2d');
+                new Chart(sentimentCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Gainers', 'Losers', 'Unchanged'],
+                        datasets: [{
+                            data: [data.gainers, data.losers, data.unchanged],
+                            backgroundColor: ['#10B981', '#EF4444', '#9CA3AF']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+
+                // We'll need to load sector data to create the sector performance chart
+                loadSectorPerformance();
+            } catch (error) {
+                console.error('Error loading market overview:', error);
+                // Show error message in the UI
+                document.getElementById('market-summary').innerHTML = `
+                    <div class="p-4 text-center">
+                        <p class="text-red-500 mb-2">Failed to load data</p>
+                        <button class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded" onclick="loadMarketOverview()">
+                            Try Again
+                        </button>
+                    </div>
+                `;
+                
+                // Still try to load other sections
+                loadSectorPerformance();
+            }
+        }
+        
+        // Function to restore canvas element
+        function restoreCanvas(canvasId) {
+            const container = document.getElementById(canvasId).parentNode;
+            container.innerHTML = `<canvas id="${canvasId}"></canvas>`;
+        }
+
+        // Load Top Movers (Gainers and Losers)
+        async function loadTopMovers() {
+            try {
+                // Add timeout to prevent eternal loading
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                const response = await fetch('http://localhost:5000/api/market/movers', {
+                    signal: controller.signal
+                }).catch(error => {
+                    console.error('Fetch error:', error);
+                    return null;
+                });
+                
+                clearTimeout(timeoutId);
+                
+                // If response is null or not ok, use fallback data
+                let data;
+                if (!response || !response.ok) {
+                    console.warn('Using fallback data for top movers');
+                    data = {
+                        gainers: [
+                            { symbol: 'RELIANCE', industry: 'Oil & Gas', close: 2754.25, percentageChange: 3.45, volume: 2500000 },
+                            { symbol: 'TCS', industry: 'IT', close: 3456.75, percentageChange: 2.78, volume: 1500000 },
+                            { symbol: 'HDFCBANK', industry: 'Banking', close: 1876.50, percentageChange: 2.35, volume: 2200000 },
+                            { symbol: 'INFY', industry: 'IT', close: 1543.20, percentageChange: 1.98, volume: 1800000 },
+                            { symbol: 'SBIN', industry: 'Banking', close: 624.35, percentageChange: 1.65, volume: 3100000 }
+                        ],
+                        losers: [
+                            { symbol: 'TATASTEEL', industry: 'Metal', close: 987.65, percentageChange: -2.87, volume: 1900000 },
+                            { symbol: 'ICICIBANK', industry: 'Banking', close: 765.40, percentageChange: -2.15, volume: 2000000 },
+                            { symbol: 'WIPRO', industry: 'IT', close: 432.10, percentageChange: -1.98, volume: 1400000 },
+                            { symbol: 'AXISBANK', industry: 'Banking', close: 896.45, percentageChange: -1.76, volume: 1600000 },
+                            { symbol: 'KOTAKBANK', industry: 'Banking', close: 1765.30, percentageChange: -1.45, volume: 1100000 }
+                        ]
+                    };
+                } else {
+                    data = await response.json();
+                }
+                
+                // Populate top gainers table
+                const gainersBody = document.getElementById('top-gainers-body');
+                gainersBody.innerHTML = '';
+                
+                data.gainers.forEach(stock => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <div class="font-medium text-gray-900">${stock.symbol}</div>
+                            <div class="text-xs text-gray-500">${stock.industry || 'N/A'}</div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">${stock.close.toFixed(2)}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-green-600">+${stock.percentageChange.toFixed(2)}%</td>
+                        <td class="px-4 py-3 whitespace-nowrap">${formatNumber(stock.volume)}</td>
+                    `;
+                    gainersBody.appendChild(row);
+                });
+
+                // Populate top losers table
+                const losersBody = document.getElementById('top-losers-body');
+                losersBody.innerHTML = '';
+                
+                data.losers.forEach(stock => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <div class="font-medium text-gray-900">${stock.symbol}</div>
+                            <div class="text-xs text-gray-500">${stock.industry || 'N/A'}</div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">${stock.close.toFixed(2)}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-red-600">${stock.percentageChange.toFixed(2)}%</td>
+                        <td class="px-4 py-3 whitespace-nowrap">${formatNumber(stock.volume)}</td>
+                    `;
+                    losersBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading top movers:', error);
+                
+                // Show error messages
+                const errorHtml = `
+                    <tr>
+                        <td colspan="4" class="p-4 text-center">
+                            <p class="text-red-500 mb-2">Failed to load data</p>
+                            <button class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded" onclick="loadTopMovers()">
+                                Try Again
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                
+                document.getElementById('top-gainers-body').innerHTML = errorHtml;
+                document.getElementById('top-losers-body').innerHTML = errorHtml;
+            }
+        }
+
+        // Load Sector Performance Chart
+        async function loadSectorPerformance() {
+            try {
+                // Add timeout to prevent eternal loading
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                const response = await fetch('http://localhost:5000/api/stocks', {
+                    signal: controller.signal
+                }).catch(error => {
+                    console.error('Fetch error:', error);
+                    return null;
+                });
+                
+                clearTimeout(timeoutId);
+                
+                // If response is null or not ok, use fallback data
+                let stocks;
+                if (!response || !response.ok) {
+                    console.warn('Using fallback data for sector performance');
+                    // Generate sample industry data
+                    stocks = [
+                        // Banking sector stocks
+                        ...Array(15).fill().map((_, i) => ({
+                            symbol: `BANK${i+1}`,
+                            industry: 'Banking',
+                            close: 1000 + Math.random() * 1000,
+                            prevClose: 980 + Math.random() * 1000,
+                            volume: 500000 + Math.random() * 2000000
+                        })),
+                        // IT sector stocks
+                        ...Array(12).fill().map((_, i) => ({
+                            symbol: `IT${i+1}`,
+                            industry: 'IT',
+                            close: 2000 + Math.random() * 2000,
+                            prevClose: 1950 + Math.random() * 2000,
+                            volume: 300000 + Math.random() * 1500000
+                        })),
+                        // Auto sector stocks
+                        ...Array(8).fill().map((_, i) => ({
+                            symbol: `AUTO${i+1}`,
+                            industry: 'Automobile',
+                            close: 1500 + Math.random() * 1000,
+                            prevClose: 1480 + Math.random() * 1000,
+                            volume: 400000 + Math.random() * 1000000
+                        })),
+                        // Pharma sector stocks
+                        ...Array(10).fill().map((_, i) => ({
+                            symbol: `PHARMA${i+1}`,
+                            industry: 'Pharmaceuticals',
+                            close: 800 + Math.random() * 800,
+                            prevClose: 790 + Math.random() * 800,
+                            volume: 350000 + Math.random() * 900000
+                        })),
+                        // Energy sector stocks
+                        ...Array(7).fill().map((_, i) => ({
+                            symbol: `ENERGY${i+1}`,
+                            industry: 'Energy',
+                            close: 1200 + Math.random() * 1200,
+                            prevClose: 1180 + Math.random() * 1200,
+                            volume: 600000 + Math.random() * 1800000
+                        }))
+                    ];
+                } else {
+                    stocks = await response.json();
+                }
+                
+                // Group by industry and calculate performance
+                const industries = {};
+                stocks.forEach(stock => {
+                    if (!stock.industry) return;
+                    
+                    if (!industries[stock.industry]) {
+                        industries[stock.industry] = {
+                            count: 0,
+                            performance: 0,
+                            totalChange: 0
+                        };
+                    }
+                    
+                    const prevClose = stock.prevClose;
+                    const close = stock.close;
+                    if (prevClose && close) {
+                        const change = ((close - prevClose) / prevClose) * 100;
+                        industries[stock.industry].totalChange += change;
+                        industries[stock.industry].count++;
+                    }
+                });
+                
+                // Calculate average performance by industry
+                const industryData = [];
+                for (const [industry, data] of Object.entries(industries)) {
+                    if (data.count > 0) {
+                        const avgPerformance = data.totalChange / data.count;
+                        industryData.push({
+                            industry,
+                            performance: avgPerformance,
+                            count: data.count
+                        });
+                    }
+                }
+                
+                // Sort and take top 10 industries by stock count
+                industryData.sort((a, b) => b.count - a.count);
+                const topIndustries = industryData.slice(0, 10);
+                
+                // Restore canvas before creating chart
+                restoreCanvas('sector-performance-chart');
+                
+                // Create sector performance chart
+                const sectorCtx = document.getElementById('sector-performance-chart').getContext('2d');
+                new Chart(sectorCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: topIndustries.map(item => item.industry),
+                        datasets: [{
+                            label: 'Performance (%)',
+                            data: topIndustries.map(item => item.performance.toFixed(2)),
+                            backgroundColor: topIndustries.map(item => 
+                                item.performance >= 0 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(239, 68, 68, 0.7)'
+                            ),
+                            borderColor: topIndustries.map(item => 
+                                item.performance >= 0 ? 'rgb(16, 185, 129)' : 'rgb(239, 68, 68)'
+                            ),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Performance: ${context.raw}%`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Performance (%)'
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Also populate the industry selector
+                const industrySelector = document.getElementById('industry-selector');
+                industrySelector.innerHTML = '<option value="">All Industries</option>';
+                
+                Object.keys(industries).sort().forEach(industry => {
+                    const option = document.createElement('option');
+                    option.value = industry;
+                    option.textContent = industry;
+                    industrySelector.appendChild(option);
+                });
+                
+                // Add change event to industry selector
+                industrySelector.addEventListener('change', function() {
+                    loadIndustryAnalysis(this.value);
+                });
+                
+            } catch (error) {
+                console.error('Error loading sector performance:', error);
+                
+                // Show error message
+                const sectorChartContainer = document.getElementById('sector-performance-chart').parentNode;
+                sectorChartContainer.innerHTML = `
+                    <div class="p-4 text-center">
+                        <p class="text-red-500 mb-2">Failed to load sector performance data</p>
+                        <button class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded" onclick="loadSectorPerformance()">
+                            Try Again
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Load Industry Analysis
+        async function loadIndustryAnalysis(selectedIndustry = '') {
+            try {
+                // If we've already loaded sector performance with fallback data
+                // we can reuse that data instead of making another API call
+                let stocks;
+                
+                // Add timeout to prevent eternal loading
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                const response = await fetch('http://localhost:5000/api/stocks', {
+                    signal: controller.signal
+                }).catch(error => {
+                    console.error('Fetch error:', error);
+                    return null;
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response || !response.ok) {
+                    console.warn('Using fallback data for industry analysis');
+                    // Generate sample industry data - same structure as in loadSectorPerformance
+                    stocks = [
+                        // Banking sector stocks
+                        ...Array(15).fill().map((_, i) => ({
+                            symbol: `BANK${i+1}`,
+                            industry: 'Banking',
+                            close: 1000 + Math.random() * 1000,
+                            prevClose: 980 + Math.random() * 1000,
+                            volume: 500000 + Math.random() * 2000000
+                        })),
+                        // IT sector stocks
+                        ...Array(12).fill().map((_, i) => ({
+                            symbol: `IT${i+1}`,
+                            industry: 'IT',
+                            close: 2000 + Math.random() * 2000,
+                            prevClose: 1950 + Math.random() * 2000,
+                            volume: 300000 + Math.random() * 1500000
+                        })),
+                        // Auto sector stocks
+                        ...Array(8).fill().map((_, i) => ({
+                            symbol: `AUTO${i+1}`,
+                            industry: 'Automobile',
+                            close: 1500 + Math.random() * 1000,
+                            prevClose: 1480 + Math.random() * 1000,
+                            volume: 400000 + Math.random() * 1000000
+                        })),
+                        // Pharma sector stocks
+                        ...Array(10).fill().map((_, i) => ({
+                            symbol: `PHARMA${i+1}`,
+                            industry: 'Pharmaceuticals',
+                            close: 800 + Math.random() * 800,
+                            prevClose: 790 + Math.random() * 800,
+                            volume: 350000 + Math.random() * 900000
+                        })),
+                        // Energy sector stocks
+                        ...Array(7).fill().map((_, i) => ({
+                            symbol: `ENERGY${i+1}`,
+                            industry: 'Energy',
+                            close: 1200 + Math.random() * 1200,
+                            prevClose: 1180 + Math.random() * 1200,
+                            volume: 600000 + Math.random() * 1800000
+                        }))
+                    ];
+                } else {
+                    stocks = await response.json();
+                }
+                
+                // Group stocks by industry
+                const industries = {};
+                stocks.forEach(stock => {
+                    if (!stock.industry) return;
+                    
+                    if (!industries[stock.industry]) {
+                        industries[stock.industry] = {
+                            stocks: [],
+                            totalClose: 0,
+                            totalVolume: 0,
+                            gainers: 0,
+                            losers: 0
+                        };
+                    }
+                    
+                    industries[stock.industry].stocks.push(stock);
+                    industries[stock.industry].totalClose += stock.close;
+                    industries[stock.industry].totalVolume += stock.volume;
+                    
+                    if (stock.close > stock.prevClose) {
+                        industries[stock.industry].gainers++;
+                    } else if (stock.close < stock.prevClose) {
+                        industries[stock.industry].losers++;
+                    }
+                });
+                
+                // Calculate metrics for each industry
+                const industryMetrics = [];
+                for (const [industry, data] of Object.entries(industries)) {
+                    if (selectedIndustry && selectedIndustry !== industry) continue;
+                    
+                    const stockCount = data.stocks.length;
+                    if (stockCount > 0) {
+                        const avgPrice = data.totalClose / stockCount;
+                        
+                        // Calculate average change percentage
+                        let totalChangePercent = 0;
+                        data.stocks.forEach(stock => {
+                            if (stock.prevClose) {
+                                const changePercent = ((stock.close - stock.prevClose) / stock.prevClose) * 100;
+                                totalChangePercent += changePercent;
+                            }
+                        });
+                        const avgChangePercent = totalChangePercent / stockCount;
+                        
+                        // Calculate gainers/losers ratio
+                        const glRatio = data.losers === 0 ? data.gainers : data.gainers / data.losers;
+                        
+                        industryMetrics.push({
+                            industry,
+                            avgPrice,
+                            avgChangePercent,
+                            totalVolume: data.totalVolume,
+                            glRatio,
+                            stockCount
+                        });
+                    }
+                }
+                
+                // Sort by stock count
+                industryMetrics.sort((a, b) => b.stockCount - a.stockCount);
+                
+                // Populate the table
+                const tableBody = document.getElementById('industry-analysis-body');
+                tableBody.innerHTML = '';
+                
+                industryMetrics.forEach(metric => {
+                    const row = document.createElement('tr');
+                    const changeClass = metric.avgChangePercent >= 0 ? 'text-green-600' : 'text-red-600';
+                    const changeSymbol = metric.avgChangePercent >= 0 ? '+' : '';
+                    
+                    row.innerHTML = `
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <div class="font-medium text-gray-900">${metric.industry}</div>
+                            <div class="text-xs text-gray-500">${metric.stockCount} stocks</div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">₹${metric.avgPrice.toFixed(2)}</td>
+                        <td class="px-4 py-3 whitespace-nowrap ${changeClass}">${changeSymbol}${metric.avgChangePercent.toFixed(2)}%</td>
+                        <td class="px-4 py-3 whitespace-nowrap">${formatNumber(metric.totalVolume)}</td>
+                        <td class="px-4 py-3 whitespace-nowrap">${metric.glRatio.toFixed(2)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+            } catch (error) {
+                console.error('Error loading industry analysis:', error);
+                
+                // Show error message
+                document.getElementById('industry-analysis-body').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="p-4 text-center">
+                            <p class="text-red-500 mb-2">Failed to load industry analysis data</p>
+                            <button class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded" onclick="loadIndustryAnalysis()">
+                                Try Again
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Load Historical Analysis Data
+        async function loadHistoricalData() {
+            // For this example, we'll use the Nifty 50 or a major stock like RELIANCE
+            const symbol = 'RELIANCE'; // You can change this to any major stock or create a selector
+            const days = 30; // Last 30 days
+            
+            try {
+                // Add timeout to prevent eternal loading
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                const response = await fetch(`http://localhost:5000/api/stocks/${symbol}/history?days=${days}`, {
+                    signal: controller.signal
+                }).catch(error => {
+                    console.error('Fetch error:', error);
+                    return null;
+                });
+                
+                clearTimeout(timeoutId);
+                
+                // If response is null or not ok, use fallback data
+                let data;
+                if (!response || !response.ok) {
+                    console.warn('Using fallback data for historical analysis');
+                    
+                    // Generate sample historical data - 30 days
+                    const basePrice = 2500;
+                    const baseVolume = 2000000;
+                    data = Array(30).fill().map((_, i) => {
+                        const date = new Date();
+                        date.setDate(date.getDate() - (30 - i));
+                        
+                        // Create some randomness but with a trend
+                        const trendFactor = Math.sin(i / 5) * 0.5 + 0.5; // Value between 0 and 1 with some trend
+                        const dayVariation = (Math.random() - 0.5) * 100; // Random daily variation
+                        
+                        const close = basePrice + (trendFactor * 300) + dayVariation;
+                        const open = close - (Math.random() * 40 - 20);
+                        const high = Math.max(open, close) + (Math.random() * 30);
+                        const low = Math.min(open, close) - (Math.random() * 30);
+                        
+                        return {
+                            date: date.toISOString(),
+                            open: open,
+                            high: high,
+                            low: low,
+                            close: close,
+                            volume: baseVolume + (Math.random() * baseVolume) 
+                        };
+                    });
+                } else {
+                    data = await response.json();
+                    
+                    // If we got an empty array, use fallback data
+                    if (!data || data.length === 0) {
+                        console.warn('Empty response, using fallback data for historical analysis');
+                        return loadHistoricalData(); // This will use the fallback data on recursion
+                    }
+                }
+                
+                // Prepare data for charts
+                const dates = data.map(item => {
+                    const date = new Date(item.date);
+                    return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                });
+                
+                const volumes = data.map(item => item.volume);
+                const closePrices = data.map(item => item.close);
+                
+                // Calculate volatility (simple implementation using daily ranges)
+                const volatility = data.map(item => ((item.high - item.low) / item.low) * 100);
+                
+                // Restore volume chart canvas
+                restoreCanvas('volume-trend-chart');
+                
+                // Create Volume Trend Chart
+                const volumeCtx = document.getElementById('volume-trend-chart').getContext('2d');
+                new Chart(volumeCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Volume',
+                            data: volumes,
+                            backgroundColor: 'rgba(79, 70, 229, 0.6)',
+                            borderColor: 'rgb(79, 70, 229)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Volume'
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Restore volatility chart canvas
+                restoreCanvas('volatility-chart');
+                
+                // Create Volatility Chart
+                const volatilityCtx = document.getElementById('volatility-chart').getContext('2d');
+                new Chart(volatilityCtx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [
+                            {
+                                label: 'Price',
+                                data: closePrices,
+                                borderColor: 'rgb(59, 130, 246)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                yAxisID: 'y',
+                                fill: true
+                            },
+                            {
+                                label: 'Volatility (%)',
+                                data: volatility,
+                                borderColor: 'rgb(239, 68, 68)',
+                                backgroundColor: 'rgba(0, 0, 0, 0)',
+                                borderDash: [5, 5],
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: 'Price (₹)'
+                                }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: 'Volatility (%)'
+                                },
+                                grid: {
+                                    drawOnChartArea: false
+                                }
+                            }
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error loading historical data:', error);
+                
+                // Show error messages
+                const errorHtml = `
+                    <div class="p-4 text-center">
+                        <p class="text-red-500 mb-2">Failed to load historical data</p>
+                        <button class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded" onclick="loadHistoricalData()">
+                            Try Again
+                        </button>
+                    </div>
+                `;
+                
+                document.getElementById('volume-trend-chart').parentNode.innerHTML = errorHtml;
+                document.getElementById('volatility-chart').parentNode.innerHTML = errorHtml;
+            }
+        }
+    </script>
+</body>
+</html> 
